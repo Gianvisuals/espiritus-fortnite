@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rastreador de Espíritus - Fortnite</title>
+    
+    <meta name="description" content="Gestiona y rastrea tu colección de espíritus y sus variantes en Fortnite.">
+    <meta property="og:title" content="Rastreador de Espíritus - Fortnite">
+    <meta property="og:description" content="Gestiona y rastrea tu colección de espíritus y sus variantes en Fortnite.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#13151a">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👻</text></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f1015;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        .variant-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .variant-btn:active {
+            transform: scale(0.92);
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="text-white antialiased">
+    <div class="max-w-md mx-auto min-h-screen bg-[#13151a] relative shadow-2xl flex flex-col border-x border-gray-800">
+        
+        <header class="sticky top-0 z-10 bg-[#13151a]/95 backdrop-blur-md border-b border-gray-800 p-5 pt-6 shadow-md">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500 tracking-tight">
+                        Espíritus Fortnite
+                    </h1>
+                    <p class="text-xs text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Guía & Colección (fortnite.gg)</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="exportData()" title="Exportar Progreso" class="text-gray-400 hover:text-green-400 transition-all bg-[#1c1f26] w-9 h-9 flex items-center justify-center rounded-full border border-gray-700 shadow-lg">
+                        <i class="fas fa-file-export text-xs"></i>
+                    </button>
+                    <button onclick="importData()" title="Importar Progreso" class="text-gray-400 hover:text-yellow-400 transition-all bg-[#1c1f26] w-9 h-9 flex items-center justify-center rounded-full border border-gray-700 shadow-lg">
+                        <i class="fas fa-file-import text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4 relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="search-input" onkeyup="renderSpirits()" placeholder="Buscar espíritu o variante..." class="w-full bg-[#1c1f26] border border-gray-700 text-white text-sm rounded-xl focus:ring-purple-500 focus:border-purple-500 block pl-10 p-3 outline-none transition-all placeholder-gray-500">
+            </div>
+
+            <div class="mt-4">
+                <div class="flex justify-between text-xs font-semibold mb-1.5">
+                    <span class="text-purple-400">Progreso Total</span>
+                    <span id="progress-text" class="text-white bg-gray-800 px-2 py-0.5 rounded-full">0/0 (0%)</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden border border-gray-700">
+                    <div id="progress-bar" class="bg-gradient-to-r from-purple-600 to-blue-500 h-full rounded-full transition-all duration-500 relative" style="width: 0%">
+                        <div class="absolute top-0 left-0 w-full h-full bg-white/20" style="animation: shimmer 2s infinite linear; background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 pb-24">
+            <div id="spirits-list" class="flex flex-col gap-4"></div>
+            
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 opacity-70">
+                <i class="fas fa-ghost text-5xl text-gray-600 mb-4 animate-bounce"></i>
+                <p class="text-gray-400 font-medium text-center px-4">No hay espíritus en esta categoría.</p>
+            </div>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#13151a]/95 backdrop-blur-md border-t border-gray-800 flex justify-around p-2 z-20 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.3)]">
+            <button onclick="setFilter('todos')" id="btn-todos" class="flex-1 flex flex-col items-center p-2 text-purple-400 transition-colors">
+                <i class="fas fa-layer-group text-xl mb-1"></i>
+                <span class="text-[10px] uppercase font-bold tracking-wider">Todos</span>
+            </button>
+            <button onclick="setFilter('obtenidos')" id="btn-obtenidos" class="flex-1 flex flex-col items-center p-2 text-gray-500 hover:text-purple-400 transition-colors">
+                <i class="fas fa-star text-xl mb-1"></i>
+                <span class="text-[10px] uppercase font-bold tracking-wider">Obtenidos</span>
+            </button>
+            <button onclick="setFilter('faltantes')" id="btn-faltantes" class="flex-1 flex flex-col items-center p-2 text-gray-500 hover:text-purple-400 transition-colors">
+                <i class="fas fa-lock text-xl mb-1"></i>
+                <span class="text-[10px] uppercase font-bold tracking-wider">Faltantes</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        const baseVariants = ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"];
+        const noVariants = ["Único"];
+        
+        const spiritsConfig = [
+            { name: "John Wick", imgUrl: "https://fortnite.gg/img/sprites/john-wick.png", variants: noVariants },
+            { name: "Batman", imgUrl: "https://fortnite.gg/img/sprites/batman.png", variants: baseVariants },
+            { name: "Agua", imgUrl: "https://fortnite.gg/img/sprites/water.png", variants: baseVariants },
+            { name: "Tierra", imgUrl: "https://fortnite.gg/img/sprites/earth.png", variants: baseVariants },
+            { name: "Fuego", imgUrl: "https://fortnite.gg/img/sprites/fire.png", variants: baseVariants },
+            { name: "Patito", imgUrl: "https://fortnite.gg/img/sprites/duck.png", variants: baseVariants },
+            { name: "Fantasma", imgUrl: "https://fortnite.gg/img/sprites/ghost.png", variants: baseVariants },
+            { name: "Dormilón", imgUrl: "https://fortnite.gg/img/sprites/sleepy.png", variants: baseVariants },
+            { name: "Demonio", imgUrl: "https://fortnite.gg/img/sprites/demon.png", variants: baseVariants },
+            { name: "Punk", imgUrl: "https://fortnite.gg/img/sprites/punk.png", variants: baseVariants },
+            { name: "Monarca", imgUrl: "https://fortnite.gg/img/sprites/monarch.png", variants: baseVariants },
+            { name: "Maní Quemado", imgUrl: "https://fortnite.gg/img/sprites/burnt-peanut.png", variants: noVariants },
+            { name: "Vini Jr.", imgUrl: "https://fortnite.gg/img/sprites/vini-jr.png", variants: noVariants },
+            { name: "Punto Cero", imgUrl: "https://fortnite.gg/img/sprites/zero-point.png", variants: baseVariants },
+            { name: "Pescado", imgUrl: "https://fortnite.gg/img/sprites/fish.png", variants: baseVariants },
+            { name: "Delantero", imgUrl: "https://fortnite.gg/img/sprites/striker.png", variants: baseVariants },
+            { name: "Aura", imgUrl: "https://fortnite.gg/img/sprites/aura.png", variants: baseVariants },
+            { name: "Jefe", imgUrl: "https://fortnite.gg/img/sprites/boss.png", variants: baseVariants },
+            { name: "Grim", imgUrl: "https://fortnite.gg/img/sprites/grim.png", variants: baseVariants },
+            { name: "Aire", imgUrl: "https://fortnite.gg/img/sprites/air.png", variants: baseVariants },
+            { name: "Los Siete", imgUrl: "https://fortnite.gg/img/sprites/the-seven.png", variants: baseVariants },
+            { name: "Ironmouse", imgUrl: "https://fortnite.gg/img/sprites/ironmouse.png", variants: noVariants },
+            { name: "Pollo", imgUrl: "https://fortnite.gg/img/sprites/chicken.png", variants: noVariants },
+            { name: "Llama", imgUrl: "https://fortnite.gg/img/sprites/llama.png", variants: baseVariants },
+            { name: "Banana", imgUrl: "https://fortnite.gg/img/sprites/banana.png", variants: baseVariants },
+            { name: "Parca", imgUrl: "https://fortnite.gg/img/sprites/reaper.png", variants: baseVariants }
+        ];
+
+        let savedProgress = JSON.parse(localStorage.getItem('fortniteSpiritsListV4')) || {};
+        let currentFilter = 'todos'; 
+        let totalTotalVariants = 0;
+
+        function initializeData() {
+            totalTotalVariants = spiritsConfig.reduce((acc, curr) => acc + curr.variants.length, 0);
+            renderSpirits();
+        }
+
+        function getVariantStyle(variant, isObtained) {
+            if (!isObtained) return 'bg-[#13151a] border-gray-700 text-gray-500 hover:bg-gray-800';
+            
+            const styles = {
+                "Común": "bg-gray-700/40 border-gray-500 text-gray-300 drop-shadow-[0_0_8px_rgba(156,163,175,0.3)]",
+                "Cúbico": "bg-purple-600/30 border-purple-500 text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]",
+                "Dorado": "bg-yellow-600/30 border-yellow-500 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]",
+                "Patito": "bg-orange-600/30 border-orange-500 text-orange-400 drop-shadow-[0_0_8px_rgba(249,115,22,0.4)]",
+                "Gomita": "bg-pink-600/30 border-pink-500 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.4)]",
+                "Galáctico": "bg-blue-900/50 border-blue-400 text-blue-200 drop-shadow-[0_0_8px_rgba(96,165,250,0.4)]",
+                "Gema": "bg-emerald-600/30 border-emerald-500 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]",
+                "Holográfico": "bg-cyan-600/30 border-cyan-500 text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]",
+                "Único": "bg-indigo-600/30 border-indigo-500 text-indigo-300 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]"
+            };
+            
+            return styles[variant] || "bg-purple-600/30 border-purple-500 text-purple-300";
+        }
+
+        function renderSpirits() {
+            const listContainer = document.getElementById('spirits-list');
+            const emptyState = document.getElementById('empty-state');
+            const searchInput = document.getElementById('search-input');
+            
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+            
+            listContainer.innerHTML = '';
+            let spiritsRendered = 0;
+            let htmlBuffer = '';
+
+            spiritsConfig.forEach((spirit, sIndex) => {
+                const normalizedSpiritName = spirit.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                const variantsData = spirit.variants.map((variant, vIndex) => {
+                    const id = `${sIndex}_${vIndex}`;
+                    return {
+                        id: id,
+                        name: variant,
+                        isObtained: !!savedProgress[id],
+                        sIndex, 
+                        vIndex
+                    };
+                });
+
+                let visibleVariants = variantsData;
+                if (currentFilter === 'obtenidos') {
+                    visibleVariants = variantsData.filter(v => v.isObtained);
+                } else if (currentFilter === 'faltantes') {
+                    visibleVariants = variantsData.filter(v => !v.isObtained);
+                }
+
+                const matchesSearch = normalizedSpiritName.includes(searchQuery) || 
+                                      visibleVariants.some(v => v.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(searchQuery));
+
+                if (!matchesSearch || visibleVariants.length === 0) return;
+
+                spiritsRendered++;
+
+                const variantsHtml = visibleVariants.map(v => {
+                    const styleClasses = getVariantStyle(v.name, v.isObtained);
+                    const icon = v.isObtained ? '<i class="fas fa-check mr-1.5 opacity-80"></i>' : '';
+                    return `
+                        <button onclick="toggleVariant(${v.sIndex}, ${v.vIndex})" 
+                                class="variant-btn px-3 py-1.5 rounded-lg text-xs font-bold border ${styleClasses} flex items-center select-none">
+                            ${icon}${v.name}
+                        </button>
+                    `;
+                }).join('');
+
+                const obtainedCount = variantsData.filter(v => v.isObtained).length;
+                const totalInSpirit = variantsData.length;
+                const isComplete = obtainedCount === totalInSpirit;
+                
+                const cardBorder = isComplete ? 'border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 'border-gray-800';
+                const headerColor = isComplete ? 'text-purple-400' : 'text-white';
+                const initials = spirit.name.substring(0, 2).toUpperCase();
+                
+                const imageHtml = spirit.imgUrl 
+                    ? `<img src="${spirit.imgUrl}" alt="${spirit.name}" onerror="this.outerHTML='<div class=\\'w-12 h-12 rounded-full bg-[#13151a] border border-gray-700 flex items-center justify-center font-bold text-gray-400 text-sm flex-shrink-0\\'>${initials}</div>'" class="w-12 h-12 rounded-full border-2 border-gray-700 object-cover flex-shrink-0 bg-[#13151a] p-0.5">`
+                    : `<div class="w-12 h-12 rounded-full bg-[#13151a] border border-gray-700 flex items-center justify-center font-bold text-gray-400 text-sm flex-shrink-0">${initials}</div>`;
+
+                htmlBuffer += `
+                    <div class="bg-[#1c1f26] rounded-xl border ${cardBorder} p-4 flex flex-col transition-all duration-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center gap-3">
+                                ${imageHtml}
+                                <h3 class="font-bold text-lg ${headerColor}">${spirit.name}</h3>
+                            </div>
+                            <div class="text-xs font-bold px-2.5 py-1 bg-[#13151a] border border-gray-800 rounded-md ${isComplete ? 'text-purple-400' : 'text-gray-500'}">
+                                ${obtainedCount} / ${totalInSpirit}
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 pt-1 border-t border-gray-800/50 mt-2 pt-3">
+                            ${variantsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = htmlBuffer;
+
+            if (spiritsRendered === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            updateProgress();
+        }
+
+        function toggleVariant(sIndex, vIndex) {
+            const id = `${sIndex}_${vIndex}`;
+            
+            if (savedProgress[id]) {
+                delete savedProgress[id];
+            } else {
+                savedProgress[id] = true;
+            }
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(savedProgress[id] ? 50 : 20);
+            }
+
+            localStorage.setItem('fortniteSpiritsListV4', JSON.stringify(savedProgress));
+            renderSpirits(); 
+        }
+
+        function updateProgress() {
+            const obtainedTotal = Object.keys(savedProgress).length;
+            const percentage = totalTotalVariants === 0 ? 0 : Math.round((obtainedTotal / totalTotalVariants) * 100);
+
+            document.getElementById('progress-text').innerText = `${obtainedTotal}/${totalTotalVariants} (${percentage}%)`;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            
+            const buttons = ['todos', 'obtenidos', 'faltantes'];
+            buttons.forEach(btn => {
+                const el = document.getElementById(`btn-${btn}`);
+                el.classList.remove('text-purple-400');
+                el.classList.add('text-gray-500');
+            });
+
+            const activeBtn = document.getElementById(`btn-${filterType}`);
+            activeBtn.classList.remove('text-gray-500');
+            activeBtn.classList.add('text-purple-400');
+
+            document.querySelector('main').scrollTop = 0;
+            renderSpirits();
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedProgress));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "fortnite_spirits_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.readAsText(file, "UTF-8");
+                reader.onload = readerEvent => {
+                    try {
+                        const content = JSON.parse(readerEvent.target.result);
+                        if (content) {
+                            savedProgress = content;
+                            localStorage.setItem('fortniteSpiritsListV4', JSON.stringify(savedProgress));
+                        }
+                        renderSpirits();
+                        alert("¡Progreso importado con éxito!");
+                    } catch (err) {
+                        alert("Error al leer el archivo JSON.");
+                    }
+                }
+            }
+            input.click();
+        }
+
+        window.onload = initializeData;
+    </script>
+</body>
+</html>
