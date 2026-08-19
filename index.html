@@ -221,7 +221,23 @@
         ];
 
         // --- ESTADO DE LA APLICACIÓN ---
-        let savedProgress = JSON.parse(localStorage.getItem('fortniteSpiritsListV6')) || {};
+        function recoverOldData() {
+            let data = localStorage.getItem('fortniteSpiritsListV6');
+            if (data) return JSON.parse(data);
+            
+            // Sistema de auto-recuperación: Busca en versiones anteriores
+            const oldKeys = ['fortniteSpiritsListV5', 'fortniteSpiritsListV4', 'fortniteSpiritsListV3', 'fortniteSpiritsListV2', 'fortniteSpiritsList', 'fortniteSpirits'];
+            for (let key of oldKeys) {
+                let oldData = localStorage.getItem(key);
+                if (oldData) {
+                    localStorage.setItem('fortniteSpiritsListV6', oldData); // Actualiza a la nueva versión
+                    return JSON.parse(oldData);
+                }
+            }
+            return {};
+        }
+
+        let savedProgress = recoverOldData();
         let recentToggles = JSON.parse(localStorage.getItem('fortniteSpiritsRecent')) || [];
         let currentFilter = 'todos'; 
         let currentSort = 'default';
