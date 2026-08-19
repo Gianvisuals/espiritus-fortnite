@@ -113,34 +113,31 @@
     </div>
 
     <script>
-        const baseVariants = ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"];
-        const noVariants = ["Único"];
-        
-    <script>
+        // Base de datos oficial - 117 Variantes Exactas
         const spiritsConfig = [
-            { name: "John Wick", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_John_Wick_ui_L.webp", variants: ["Común"] },
-            { name: "Batman", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Batman_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Agua", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Water_ui_L.webp", variants: ["Común", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
-            { name: "Tierra", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Earth_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema"] },
-            { name: "Fuego", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fire_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Patito", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Duck_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
-            { name: "Fantasma", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Ghost_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Dormilón", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Dream_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Demonio", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Demon_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+            { name: "John Wick", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_Reload_FillerGrunt_icon_L.webp", variants: ["Común"] },
+            { name: "Batman", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_FossilMeal_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+            { name: "Agua", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Water_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+            { name: "Tierra", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Earth_Ch7S3_UI_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema"] },
+            { name: "Fuego", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fire_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Holográfico"] },
+            { name: "Patito", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Duck_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+            { name: "Fantasma", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Ghost_Unvault_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+            { name: "Dormilón", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Sleepy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
+            { name: "Demonio", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_RedDemon_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
             { name: "Punk", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Punk_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
             { name: "Monarca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_King_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Vini Jr.", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Vini_Jr_ui_L.webp", variants: ["Común"] },
-            { name: "Maní Quemado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Burnt_Peanut_ui_L.webp", variants: ["Común"] },
-            { name: "Punto Cero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Zero_Point_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+            { name: "Vini Jr.", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CokeParmesan_Default_L.webp", variants: ["Común"] },
+            { name: "Maní Quemado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_BurntPeanut_ui_L.webp", variants: ["Común"] },
+            { name: "Punto Cero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_ZeroPoint_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
             { name: "Pescado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fishy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Delantero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Striker_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Aura", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Aura_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+            { name: "Delantero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Soccer_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+            { name: "Aura", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Drifter_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
             { name: "Jefe", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Boss_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Parca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Grim_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Gema", "Holográfico"] },
-            { name: "Aire", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Air_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+            { name: "Parca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_GrimReaper_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+            { name: "Aire", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Air_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
             { name: "Los Siete", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Seven_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Ironmouse", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Ironmouse_ui_L.webp", variants: ["Común"] },
-            { name: "Pollo", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Pollo_ui_L.webp", variants: ["Común"] },
+            { name: "Ironmouse", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_PedicureAntacid_L.webp", variants: ["Común"] },
+            { name: "Pollo", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CompanyStargazer_Default_L.webp", variants: ["Común"] },
             { name: "Llama", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Llama_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
             { name: "Banana", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Peely_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] }
         ];
