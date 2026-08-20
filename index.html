@@ -6,8 +6,9 @@
     <meta name="referrer" content="no-referrer">
     
     <title>Inventario de Espíritus - Fortnite</title>
-    <meta name="description" content="Gestiona y rastrea tu colección de espíritus y sus variantes en Fortnite.">
     <meta name="theme-color" content="#13151a">
+    
+    <!-- Favicon de la Llama -->
     <link rel="icon" href="https://static.wikia.nocookie.net/fortnite/images/7/7d/Sprites_%28Vector%29_-_Icon_-_Fortnite.png/revision/latest?cb=20260607165846" type="image/x-icon">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,711 +23,470 @@
             background-color: #0f1015;
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none;
+            user-select: none;
         }
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-        
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
-
-        .variant-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .variant-btn:active { transform: scale(0.92); }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
         
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .modal-animate { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
+        /* Animaciones */
         @keyframes pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-        .animate-pop { animation: pop 0.2s ease-out; }
+        .animate-pop { animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        .recent-pulse {
-            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.3);
-            border-color: white !important;
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .spirit-card { animation: slideUp 0.3s ease-out forwards; }
+        
+        @keyframes glow { 0% { box-shadow: 0 0 5px var(--glow-color); } 50% { box-shadow: 0 0 20px var(--glow-color); } 100% { box-shadow: 0 0 5px var(--glow-color); } }
+        .recent-glow { animation: glow 1.5s ease-out; }
+
+        /* Estilos de Variantes (Botones/Píldoras) */
+        .variant-pill {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .variant-pill:active { transform: scale(0.95); }
+        
+        /* Colores Temáticos por Variante Activa */
+        .variant-pill.active { border-color: transparent !important; }
+        .variant-pill.active[data-variant="Común"] { background: linear-gradient(135deg, #4b5563, #374151); color: white; --glow-color: #9ca3af; }
+        .variant-pill.active[data-variant="Cúbico"] { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: #ddd6fe; --glow-color: #8b5cf6; }
+        .variant-pill.active[data-variant="Dorado"] { background: linear-gradient(135deg, #d97706, #92400e); color: #fde68a; --glow-color: #fbbf24; }
+        .variant-pill.active[data-variant="Patito"] { background: linear-gradient(135deg, #ea580c, #9a3412); color: #ffedd5; --glow-color: #f97316; }
+        .variant-pill.active[data-variant="Gomita"] { background: linear-gradient(135deg, #db2777, #831843); color: #fbcfe8; --glow-color: #f43f5e; }
+        .variant-pill.active[data-variant="Galáctico"] { background: linear-gradient(135deg, #2563eb, #1e3a8a); color: #bfdbfe; --glow-color: #3b82f6; }
+        .variant-pill.active[data-variant="Gema"] { background: linear-gradient(135deg, #059669, #064e3b); color: #a7f3d0; --glow-color: #10b981; }
+        .variant-pill.active[data-variant="Holográfico"] { background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #e0e7ff; --glow-color: #38bdf8; }
+        .variant-pill.active[data-variant="Cheat Master"] { background: linear-gradient(135deg, #dc2626, #7f1d1d); color: #fecaca; --glow-color: #ef4444; }
+
+        /* Estilo Inactivo */
+        .variant-pill:not(.active) {
+            background-color: transparent;
+            border: 1px solid #374151;
+            color: #6b7280;
         }
 
-        /* Ocultar scrollbar en el modal pero permitir scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Ocultar scrollbar */
+        ::-webkit-scrollbar { display: none; }
+
+        /* Toasts */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(8px); color: white; padding: 12px 24px; border-radius: 99px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5); animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     </style>
 </head>
 <body class="text-white antialiased h-screen overflow-hidden flex justify-center">
-    
+
+    <div id="toast-container"></div>
+
     <div class="w-full max-w-md h-full bg-[#13151a] relative shadow-2xl flex flex-col border-x border-gray-800">
         
-        <header class="flex-none z-10 bg-[#13151a]/95 backdrop-blur-md border-b border-gray-800 p-4 pt-5 shadow-md">
-            <div class="flex justify-between items-start mb-3">
+        <!-- HEADER FIJO ARRIBA -->
+        <header class="flex-none z-20 bg-[#13151a]/95 backdrop-blur-md border-b border-gray-800 p-4 shadow-md">
+            <div class="flex justify-between items-start mb-4">
                 <div>
-                    <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500 tracking-tight">
-                        Tu Inventario de Espíritus
+                    <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-tight">
+                        Espíritus Fortnite por Giandrix
                     </h1>
-                    <p class="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">117 Variantes • por Giandrix</p>
+                    <p id="header-subtext" class="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-semibold">Cargando...</p>
                 </div>
                 
-                <div class="flex items-center gap-1.5">
-                    <button onclick="toggleViewMode()" id="view-toggle-btn" class="text-gray-400 hover:text-white transition-all bg-[#1c1f26] w-8 h-8 flex items-center justify-center rounded-lg border border-gray-700">
-                        <i class="fas fa-th-large text-xs"></i>
-                    </button>
-                    <button onclick="toggleSortMenu()" class="text-gray-400 hover:text-white transition-all bg-[#1c1f26] w-8 h-8 flex items-center justify-center rounded-lg border border-gray-700">
-                        <i class="fas fa-sort-amount-down text-xs"></i>
-                    </button>
-                    <button onclick="exportData()" class="text-gray-400 hover:text-green-400 transition-all bg-[#1c1f26] w-8 h-8 flex items-center justify-center rounded-lg border border-gray-700">
+                <!-- Acciones -->
+                <div class="flex items-center gap-2">
+                    <button onclick="exportData()" class="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition">
                         <i class="fas fa-upload text-xs"></i>
                     </button>
-                    <button onclick="importData()" class="text-gray-400 hover:text-yellow-400 transition-all bg-[#1c1f26] w-8 h-8 flex items-center justify-center rounded-lg border border-gray-700">
+                    <button onclick="document.getElementById('import-file').click()" class="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition">
                         <i class="fas fa-download text-xs"></i>
                     </button>
+                    <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
                 </div>
             </div>
 
-            <!-- Menú de ordenamiento oculto -->
-            <div id="sort-menu" class="hidden absolute right-4 top-16 bg-[#1c1f26] border border-gray-700 rounded-xl shadow-xl z-50 p-2 text-sm w-48">
-                <button onclick="setSort('default')" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg mb-1"><i class="fas fa-list-ol w-5"></i> Por Defecto</button>
-                <button onclick="setSort('az')" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg mb-1"><i class="fas fa-sort-alpha-down w-5"></i> A - Z</button>
-                <button onclick="setSort('completos')" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg mb-1"><i class="fas fa-check-circle w-5"></i> Más Completos</button>
-                <button onclick="setSort('incompletos')" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-800 rounded-lg"><i class="fas fa-times-circle w-5"></i> Menos Completos</button>
-            </div>
-
-            <div class="relative mb-3">
+            <!-- Buscador -->
+            <div class="relative mb-4">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
-                <input type="text" id="search-input" onkeyup="renderSpirits()" placeholder="Buscar espíritu o variante..." class="w-full bg-gray-900/50 border border-gray-700 text-white text-sm rounded-xl focus:ring-purple-500 focus:border-purple-500 block pl-9 p-2.5 outline-none transition-all placeholder-gray-500">
+                <input type="text" id="search-input" placeholder="Buscar espíritu..." 
+                    class="w-full bg-[#1c1f26] border border-gray-700 text-white text-sm rounded-xl py-2.5 pl-9 pr-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-500">
             </div>
-
-            <div class="cursor-pointer group" onclick="openStatsModal()">
-                <div class="flex justify-between text-xs font-semibold mb-1.5 items-center">
-                    <span class="text-purple-400 flex items-center gap-1">
-                        Progreso Total <i class="fas fa-info-circle text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                    </span>
-                    <span id="progress-text" class="text-white bg-gray-800 px-2 py-0.5 rounded-md border border-gray-700 shadow-inner">0/117 (0%)</span>
-                </div>
-                <div class="w-full bg-gray-900 rounded-full h-2.5 overflow-hidden border border-gray-800 shadow-inner">
-                    <div id="progress-bar" class="bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-400 h-full rounded-full transition-all duration-700 relative shadow-[0_0_10px_rgba(168,85,247,0.5)]" style="width: 0%">
-                        <div class="absolute top-0 left-0 w-full h-full bg-white/20" style="animation: shimmer 2s infinite linear; background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);"></div>
+            
+            <!-- Barra de Progreso de la Pestaña Actual -->
+            <div class="bg-[#1c1f26] rounded-xl p-3 border border-gray-800 flex items-center gap-3">
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span class="text-gray-400" id="progress-title">Progreso</span>
+                        <span class="text-blue-400" id="progress-text">0/0 (0%)</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-2">
+                        <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 pb-36 bg-[#0f1015]" id="main-scroll">
-            <div id="spirits-list" class="flex flex-col gap-3"></div>
-            
-            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 opacity-70">
-                <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700">
-                    <i class="fas fa-ghost text-2xl text-gray-500"></i>
-                </div>
-                <p class="text-gray-400 font-medium text-center px-4 text-sm">No se encontraron espíritus.</p>
-            </div>
+        <!-- LISTA SCROLLABLE CENTRAL -->
+        <main id="spirits-container" class="flex-1 overflow-y-auto p-4 space-y-4 pb-48 bg-[#0f1015]">
+            <!-- Las tarjetas se inyectan aquí -->
         </main>
+        
+        <!-- NAVEGACIÓN FIJA ABAJO (Doble Fila) -->
+        <nav class="absolute bottom-0 inset-x-0 bg-[#13151a]/95 backdrop-blur-xl border-t border-gray-800 pb-safe z-30">
+            <div class="p-2 space-y-2">
+                
+                <!-- FILA 1: Filtros de Estado -->
+                <div class="flex gap-1.5 p-1 bg-[#0a0b0e] rounded-xl border border-gray-800/50">
+                    <button onclick="setFilter('todos')" id="filter-todos" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-white bg-gray-800 shadow-sm transition-all">
+                        <i class="fas fa-layer-group mb-0.5 block opacity-70"></i> Todos
+                    </button>
+                    <button onclick="setFilter('obtenidos')" id="filter-obtenidos" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-300 transition-all">
+                        <i class="fas fa-star mb-0.5 block opacity-70"></i> Obtenidos
+                    </button>
+                    <button onclick="setFilter('faltantes')" id="filter-faltantes" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-300 transition-all">
+                        <i class="fas fa-lock-open mb-0.5 block opacity-70"></i> Faltantes
+                    </button>
+                </div>
+                
+                <!-- FILA 2: Pestañas de Temporada -->
+                <div class="flex gap-2 px-1 pb-1">
+                    <button onclick="setSeason('actuales')" id="season-actuales" class="flex-1 py-2.5 bg-blue-600/20 border border-blue-500/50 text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
+                        <i class="fas fa-fire"></i> Temp. Actual
+                    </button>
+                    <button onclick="setSeason('antiguos')" id="season-antiguos" class="flex-1 py-2.5 bg-[#1c1f26] border border-gray-700 text-gray-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-gray-800">
+                        <i class="fas fa-history"></i> Antiguos
+                    </button>
+                </div>
 
-        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1c1f26]/95 backdrop-blur-md border-t border-gray-800 flex justify-around p-2 z-20 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.4)]">
-            <button onclick="setFilter('todos')" id="btn-todos" class="flex-1 flex flex-col items-center p-2 text-purple-400 transition-colors">
-                <i class="fas fa-layer-group text-lg mb-1"></i>
-                <span class="text-[9px] uppercase font-bold tracking-wider">Todos</span>
-            </button>
-            <button onclick="setFilter('obtenidos')" id="btn-obtenidos" class="flex-1 flex flex-col items-center p-2 text-gray-500 hover:text-purple-400 transition-colors">
-                <i class="fas fa-star text-lg mb-1"></i>
-                <span class="text-[9px] uppercase font-bold tracking-wider">Obtenidos</span>
-            </button>
-            <button onclick="setFilter('faltantes')" id="btn-faltantes" class="flex-1 flex flex-col items-center p-2 text-gray-500 hover:text-purple-400 transition-colors">
-                <i class="fas fa-lock-open text-lg mb-1"></i>
-                <span class="text-[9px] uppercase font-bold tracking-wider">Faltantes</span>
-            </button>
+            </div>
         </nav>
-    </div>
-
-    <!-- Modal de Estadísticas -->
-    <div id="stats-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end max-w-md mx-auto backdrop-blur-sm transition-opacity">
-        <div class="bg-[#1c1f26] rounded-t-3xl border-t border-x border-gray-700 p-6 pb-12 modal-animate max-h-[85vh] flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-chart-pie text-purple-500"></i> Estadísticas
-                </h2>
-                <button onclick="closeStatsModal()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white border border-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="overflow-y-auto no-scrollbar flex-1 pb-4">
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-gray-800/50 p-4 rounded-2xl border border-gray-700 flex flex-col items-center justify-center">
-                        <span class="text-3xl font-black text-purple-400" id="stat-100">0</span>
-                        <span class="text-[10px] text-gray-400 uppercase font-bold text-center mt-1">Espíritus al 100%</span>
-                    </div>
-                    <div class="bg-gray-800/50 p-4 rounded-2xl border border-gray-700 flex flex-col items-center justify-center">
-                        <span class="text-3xl font-black text-blue-400" id="stat-total">0</span>
-                        <span class="text-[10px] text-gray-400 uppercase font-bold text-center mt-1">Variantes Totales</span>
-                    </div>
-                </div>
-
-                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Progreso por Variante</h3>
-                <div id="variant-stats-list" class="space-y-2">
-                    <!-- Generado dinámicamente -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Espíritu Individual (Para Vista Cuadrícula) -->
-    <div id="spirit-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col justify-end max-w-md mx-auto backdrop-blur-sm">
-        <div class="bg-[#1c1f26] rounded-t-3xl border-t border-x border-gray-700 p-5 pb-safe modal-animate">
-            <div class="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-4"></div>
-            <div id="spirit-modal-content"></div>
-        </div>
-    </div>
-
-    <!-- Toast de Notificaciones -->
-    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2.5 rounded-full shadow-2xl border border-gray-700 text-sm font-medium z-[100] transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none flex items-center gap-2">
-        <i class="fas fa-info-circle text-purple-400"></i>
-        <span id="toast-msg">Mensaje</span>
+        
     </div>
 
     <script>
-        // --- BASE DE DATOS EXACTA PROPORCIONADA ---
-        const spiritsConfig = [
-            { name: "John Wick", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_Reload_FillerGrunt_icon_L.webp", variants: ["Común"] },
-            { name: "Batman", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_FossilMeal_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Agua", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Water_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
-            { name: "Tierra", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Earth_Ch7S3_UI_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema"] },
-            { name: "Fuego", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fire_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Patito", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Duck_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
-            { name: "Fantasma", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Ghost_Unvault_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Dormilón", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Sleepy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Demonio", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_RedDemon_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
-            { name: "Punk", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Punk_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Monarca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_King_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Vini Jr.", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CokeParmesan_Default_L.webp", variants: ["Común"] },
-            { name: "Maní Quemado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_BurntPeanut_ui_L.webp", variants: ["Común"] },
-            { name: "Punto Cero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_ZeroPoint_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
-            { name: "Pescado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fishy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Delantero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Soccer_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Aura", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Drifter_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
-            { name: "Jefe", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Boss_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
-            { name: "Parca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_GrimReaper_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Gema", "Holográfico"] },
-            { name: "Aire", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Air_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Los Siete", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Seven_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
-            { name: "Ironmouse", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_PedicureAntacid_L.webp", variants: ["Común"] },
-            { name: "Pollo", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CompanyStargazer_Default_L.webp", variants: ["Común"] },
-            { name: "Llama", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Llama_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
-            { name: "Banana", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Peely_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] }
-        ];
+        // --- BASE DE DATOS ---
+        const newSeasonVariants = ["Común", "Dorado", "Cheat Master"];
+        
+        const db = {
+            actuales: [
+                { name: "Jackrabbit", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_JazzJackrabbit_L.webp", variants: newSeasonVariants },
+                { name: "Shadow", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_NarrowFlea_Scribe_L.webp", variants: newSeasonVariants },
+                { name: "Bush", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_BushRanger_L.webp", variants: newSeasonVariants },
+                { name: "Tails", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_NarrowFlea_Monkey_L.webp", variants: newSeasonVariants },
+                { name: "Killswitch", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Killswitch_L.webp", variants: newSeasonVariants },
+                { name: "Adventure", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Dwarf_L.webp", variants: newSeasonVariants },
+                { name: "Klombo", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Klombo_L.webp", variants: newSeasonVariants },
+                { name: "Jonesy", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Jonesy_L.webp", variants: newSeasonVariants },
+                { name: "Sonic", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_NarrowFlea_Obsidian_L.webp", variants: newSeasonVariants },
+                { name: "Crown", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Crown_L.webp", variants: newSeasonVariants },
+                { name: "8-Bit", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_EightBitBlaster_L.webp", variants: newSeasonVariants },
+                { name: "Storm Scout", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_StormScout_L.webp", variants: newSeasonVariants }
+            ],
+            antiguos: [
+                { name: "John Wick", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_Reload_FillerGrunt_icon_L.webp", variants: ["Común"] },
+                { name: "Batman", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_FossilMeal_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Agua", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Water_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+                { name: "Tierra", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Earth_Ch7S3_UI_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema"] },
+                { name: "Fuego", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fire_Unvault_Ch7S3_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Patito", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Duck_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+                { name: "Fantasma", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Ghost_Unvault_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Dormilón", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Sleepy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
+                { name: "Demonio", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_RedDemon_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+                { name: "Punk", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Punk_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
+                { name: "Monarca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_King_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Vini Jr.", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CokeParmesan_Default_L.webp", variants: ["Común"] },
+                { name: "Maní Quemado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_BurntPeanut_ui_L.webp", variants: ["Común"] },
+                { name: "Punto Cero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_ZeroPoint_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+                { name: "Pescado", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Fishy_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
+                { name: "Delantero", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Soccer_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Aura", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Drifter_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+                { name: "Jefe", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Boss_ui_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico"] },
+                { name: "Parca", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_GrimReaper_Default_L.webp", variants: ["Común", "Cúbico", "Dorado", "Gomita", "Galáctico", "Gema", "Holográfico"] },
+                { name: "Aire", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Air_Default_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Los Siete", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Seven_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] },
+                { name: "Ironmouse", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_PedicureAntacid_L.webp", variants: ["Común"] },
+                { name: "Pollo", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_CompanyStargazer_Default_L.webp", variants: ["Común"] },
+                { name: "Llama", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Llama_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Gema"] },
+                { name: "Banana", imgUrl: "https://fortnite.gg/img/x/sprites/icons/T_Icon_BR_Creature_Sprite_Peely_ui_L.webp", variants: ["Común", "Dorado", "Gomita", "Galáctico", "Holográfico"] }
+            ]
+        };
 
-        // --- ESTADO DE LA APLICACIÓN ---
-        function recoverOldData() {
-            let data = localStorage.getItem('fortniteSpiritsListV6');
-            if (data) return JSON.parse(data);
-            
-            // Sistema de auto-recuperación: Busca en versiones anteriores
-            const oldKeys = ['fortniteSpiritsListV5', 'fortniteSpiritsListV4', 'fortniteSpiritsListV3', 'fortniteSpiritsListV2', 'fortniteSpiritsList', 'fortniteSpirits'];
-            for (let key of oldKeys) {
-                let oldData = localStorage.getItem(key);
-                if (oldData) {
-                    localStorage.setItem('fortniteSpiritsListV6', oldData); // Actualiza a la nueva versión
-                    return JSON.parse(oldData);
-                }
+        // --- ESTADO DE LA APP ---
+        const STORAGE_KEY = 'fortniteSpiritsListV7';
+        let ownedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || migrateOldData();
+        let currentSeason = 'actuales'; // 'actuales' | 'antiguos'
+        let currentFilter = 'todos'; // 'todos' | 'obtenidos' | 'faltantes'
+        let searchQuery = '';
+
+        // Migrar datos de versiones anteriores si existen
+        function migrateOldData() {
+            const oldData = localStorage.getItem('fortniteSpiritsListV6');
+            if(oldData) {
+                localStorage.setItem(STORAGE_KEY, oldData);
+                return JSON.parse(oldData);
             }
             return {};
         }
 
-        let savedProgress = recoverOldData();
-        let recentToggles = JSON.parse(localStorage.getItem('fortniteSpiritsRecent')) || [];
-        let currentFilter = 'todos'; 
-        let currentSort = 'default';
-        let viewMode = localStorage.getItem('fortniteSpiritsViewMode') || 'list'; // 'list' o 'grid'
-        let totalTotalVariants = 0;
-        let audioCtx = null;
-
-        // --- STREAMING_CHUNK:Inicialización y Utilidades ---
-        function initializeData() {
-            totalTotalVariants = spiritsConfig.reduce((acc, curr) => acc + curr.variants.length, 0);
-            updateViewModeIcon();
-            renderSpirits();
-            
-            // Cerrar menú de ordenamiento si se hace clic fuera
-            document.addEventListener('click', (e) => {
-                const sortBtn = document.querySelector('.fa-sort-amount-down').parentElement;
-                const sortMenu = document.getElementById('sort-menu');
-                if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
-                    sortMenu.classList.add('hidden');
-                }
-            });
-            
-            // Cerrar modal al hacer clic en el fondo oscurecido
-            document.getElementById('spirit-modal').addEventListener('click', function(e) {
-                if(e.target === this) closeSpiritModal();
-            });
-            document.getElementById('stats-modal').addEventListener('click', function(e) {
-                if(e.target === this) closeStatsModal();
-            });
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = message;
-            toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            setTimeout(() => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-            }, 3000);
-        }
-
-        // Sintetizador de Sonido (Pop Bubble)
+        // --- SISTEMA DE AUDIO NATIVO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playPopSound() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
-                
-                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1);
-            } catch (e) {
-                // Navegadores que bloquean audio nativamente no arrojarán error visual
-                console.log("Audio not supported or blocked");
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // --- STREAMING_CHUNK:Lógica de Estilos y UI ---
-        const variantStyles = {
-            "Común": "bg-gray-700/40 border-gray-500 text-gray-300 shadow-[0_0_8px_rgba(156,163,175,0.2)]",
-            "Cúbico": "bg-purple-600/30 border-purple-500 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.3)]",
-            "Dorado": "bg-yellow-500/30 border-yellow-400 text-yellow-300 shadow-[0_0_8px_rgba(250,204,21,0.3)]",
-            "Patito": "bg-orange-600/30 border-orange-500 text-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.3)]",
-            "Gomita": "bg-pink-600/30 border-pink-500 text-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.3)]",
-            "Galáctico": "bg-blue-800/40 border-blue-400 text-blue-200 shadow-[0_0_8px_rgba(96,165,250,0.3)]",
-            "Gema": "bg-emerald-600/30 border-emerald-500 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]",
-            "Holográfico": "bg-cyan-600/30 border-cyan-400 text-cyan-300 shadow-[0_0_8px_rgba(34,211,238,0.3)]"
-        };
-
-        function getVariantStyle(variant, isObtained, id) {
-            let base = "bg-[#13151a] border-gray-700/60 text-gray-500 hover:bg-gray-800";
-            if (isObtained) {
-                base = variantStyles[variant] || "bg-purple-600/30 border-purple-500 text-purple-300";
-            }
-            // Indicador de "Reciente"
-            if (recentToggles.includes(id) && isObtained) {
-                base += " recent-pulse";
-            }
-            return base;
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => { if(container.contains(toast)) toast.remove(); }, 3000);
         }
 
-        // --- STREAMING_CHUNK:Lógica de Renderizado ---
-        function renderSpirits() {
-            const listContainer = document.getElementById('spirits-list');
-            const emptyState = document.getElementById('empty-state');
-            const searchInput = document.getElementById('search-input');
-            const searchQuery = searchInput ? searchInput.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+        // --- RENDERIZADO PRINCIPAL ---
+        function renderList() {
+            const container = document.getElementById('spirits-container');
+            container.innerHTML = '';
             
-            // Reset contenedor
-            listContainer.innerHTML = '';
-            
-            // Configurar Grid o Lista
-            if (viewMode === 'grid') {
-                listContainer.className = 'grid grid-cols-3 gap-3';
-            } else {
-                listContainer.className = 'flex flex-col gap-3';
-            }
+            const listToRender = db[currentSeason];
+            let visibleCount = 0;
 
-            let spiritsRendered = 0;
-            
-            // Clonar y ordenar array
-            let sortedSpirits = spiritsConfig.map((s, i) => ({...s, originalIndex: i}));
-            
-            if (currentSort === 'az') {
-                sortedSpirits.sort((a, b) => a.name.localeCompare(b.name));
-            } else if (currentSort === 'completos' || currentSort === 'incompletos') {
-                sortedSpirits.sort((a, b) => {
-                    let aCount = a.variants.filter((_, vI) => savedProgress[`${a.originalIndex}_${vI}`]).length;
-                    let bCount = b.variants.filter((_, vI) => savedProgress[`${b.originalIndex}_${vI}`]).length;
-                    let aRatio = aCount / a.variants.length;
-                    let bRatio = bCount / b.variants.length;
-                    return currentSort === 'completos' ? bRatio - aRatio : aRatio - bRatio;
-                });
-            }
+            listToRender.forEach((spirit, index) => {
+                // Filtrado por búsqueda
+                if (searchQuery && !spirit.name.toLowerCase().includes(searchQuery) && 
+                    !spirit.variants.some(v => v.toLowerCase().includes(searchQuery))) {
+                    return; // Saltar si no coincide
+                }
 
-            sortedSpirits.forEach((spirit) => {
-                const sIndex = spirit.originalIndex;
-                const normalizedSpiritName = spirit.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                const variantsData = spirit.variants.map((variant, vIndex) => ({
-                    id: `${sIndex}_${vIndex}`,
-                    name: variant,
-                    isObtained: !!savedProgress[`${sIndex}_${vIndex}`],
-                    sIndex, 
-                    vIndex
-                }));
+                // Calcular progreso individual de este espíritu
+                let spiritTotal = spirit.variants.length;
+                let spiritOwned = 0;
+                let visibleVariantsHTML = '';
+                let hasVisibleVariants = false;
 
-                let visibleVariants = variantsData;
-                if (currentFilter === 'obtenidos') visibleVariants = variantsData.filter(v => v.isObtained);
-                else if (currentFilter === 'faltantes') visibleVariants = variantsData.filter(v => !v.isObtained);
+                spirit.variants.forEach(variant => {
+                    const key = `${spirit.name}-${variant}`;
+                    const isOwned = !!ownedData[key];
+                    if (isOwned) spiritOwned++;
 
-                const matchesSearch = normalizedSpiritName.includes(searchQuery) || 
-                                      visibleVariants.some(v => v.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(searchQuery));
+                    // Aplicar Filtros de Estado
+                    let showVariant = true;
+                    if (currentFilter === 'obtenidos' && !isOwned) showVariant = false;
+                    if (currentFilter === 'faltantes' && isOwned) showVariant = false;
 
-                if (!matchesSearch || visibleVariants.length === 0) return;
-
-                spiritsRendered++;
-                const obtainedCount = variantsData.filter(v => v.isObtained).length;
-                const totalInSpirit = variantsData.length;
-                const isComplete = obtainedCount === totalInSpirit;
-                const initials = spirit.name.substring(0, 2).toUpperCase();
-                
-                const imageHtml = spirit.imgUrl 
-                    ? `<img src="${spirit.imgUrl}" alt="${spirit.name}" onerror="this.outerHTML='<div class=\\'w-full h-full bg-gray-800 flex items-center justify-center font-bold text-gray-400 text-lg\\'>${initials}</div>'" class="w-full h-full object-cover p-1">`
-                    : `<div class="w-full h-full bg-gray-800 flex items-center justify-center font-bold text-gray-400 text-lg">${initials}</div>`;
-
-                if (viewMode === 'grid') {
-                    // MODO CUADRÍCULA
-                    const borderClass = isComplete ? 'border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]' : 'border-gray-700/60';
-                    const bgClass = isComplete ? 'bg-purple-900/20' : 'bg-[#1c1f26]';
-                    
-                    listContainer.innerHTML += `
-                        <div onclick="openSpiritModal(${sIndex})" class="aspect-square ${bgClass} rounded-2xl border ${borderClass} relative overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform">
-                            <div class="w-12 h-12 rounded-full border-2 border-gray-800 bg-[#13151a] overflow-hidden mb-1 shadow-md">
-                                ${imageHtml}
-                            </div>
-                            <span class="text-[10px] font-bold text-center leading-tight px-1 ${isComplete ? 'text-purple-300' : 'text-gray-300'}">${spirit.name}</span>
-                            <div class="absolute top-1.5 right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded bg-[#13151a] border border-gray-800 ${isComplete ? 'text-purple-400' : 'text-gray-500'}">
-                                ${obtainedCount}/${totalInSpirit}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // MODO LISTA
-                    const variantsHtml = visibleVariants.map(v => {
-                        const styleClasses = getVariantStyle(v.name, v.isObtained, v.id);
-                        const icon = v.isObtained ? '<i class="fas fa-check mr-1 text-[10px] opacity-80"></i>' : '';
-                        return `
-                            <button onclick="toggleVariant(${v.sIndex}, ${v.vIndex})" 
-                                    class="variant-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border ${styleClasses} flex items-center select-none shadow-sm">
-                                ${icon}${v.name}
+                    if (showVariant) {
+                        hasVisibleVariants = true;
+                        const icon = isOwned ? '<i class="fas fa-check mr-1.5 opacity-80"></i>' : '';
+                        const btnClass = `variant-pill px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center shadow-sm ${isOwned ? 'active' : ''}`;
+                        
+                        visibleVariantsHTML += `
+                            <button onclick="toggleVariant('${spirit.name}', '${variant}', this)" data-variant="${variant}" 
+                                class="${btnClass}">
+                                ${icon}${variant}
                             </button>
                         `;
-                    }).join('');
-
-                    const cardBorder = isComplete ? 'border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.15)] bg-purple-900/10' : 'border-gray-800 bg-[#1c1f26]';
-                    const headerColor = isComplete ? 'text-purple-300' : 'text-white';
-                    
-                    listContainer.innerHTML += `
-                        <div class="rounded-2xl border ${cardBorder} p-3.5 flex flex-col transition-all duration-300">
-                            <div class="flex justify-between items-center mb-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 rounded-full border-2 border-gray-700 bg-[#13151a] overflow-hidden flex-shrink-0 shadow-md">
-                                        ${imageHtml}
-                                    </div>
-                                    <h3 class="font-extrabold text-[15px] ${headerColor} tracking-tight">${spirit.name}</h3>
-                                </div>
-                                <div class="text-[11px] font-black px-2 py-1 bg-[#13151a] border border-gray-800 rounded-md ${isComplete ? 'text-purple-400' : 'text-gray-500'}">
-                                    ${obtainedCount} / ${totalInSpirit}
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-1.5 pt-1 border-t border-gray-800/50 mt-1 pt-2.5">
-                                ${variantsHtml}
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-
-            if (spiritsRendered === 0) emptyState.classList.remove('hidden');
-            else emptyState.classList.add('hidden');
-
-            updateProgress();
-        }
-
-        // --- STREAMING_CHUNK:Lógica de Interacción ---
-        function toggleVariant(sIndex, vIndex) {
-            playPopSound();
-            if (navigator.vibrate) navigator.vibrate(20);
-
-            const id = `${sIndex}_${vIndex}`;
-            const spirit = spiritsConfig[sIndex];
-            const wasComplete = spirit.variants.every((_, i) => savedProgress[`${sIndex}_${i}`]);
-            
-            if (savedProgress[id]) {
-                delete savedProgress[id];
-                // Remover de recientes si se desmarca
-                recentToggles = recentToggles.filter(item => item !== id);
-            } else {
-                savedProgress[id] = true;
-                // Añadir a recientes
-                recentToggles.push(id);
-                if (recentToggles.length > 3) recentToggles.shift(); // Mantener solo 3
-            }
-            
-            // Check Confetti (solo si se acaba de completar al 100%)
-            const isNowComplete = spirit.variants.every((_, i) => savedProgress[`${sIndex}_${i}`]);
-            if (!wasComplete && isNowComplete) {
-                shootConfetti();
-                if (navigator.vibrate) navigator.vibrate([30, 50, 30]); // Vibración feliz
-            }
-
-            localStorage.setItem('fortniteSpiritsListV6', JSON.stringify(savedProgress));
-            localStorage.setItem('fortniteSpiritsRecent', JSON.stringify(recentToggles));
-            
-            renderSpirits(); 
-            
-            // Si el modal individual está abierto, actualizarlo
-            if (!document.getElementById('spirit-modal').classList.contains('hidden')) {
-                openSpiritModal(sIndex);
-            }
-        }
-
-        function shootConfetti() {
-            var duration = 2000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100, origin: { y: 0.4 } };
-
-            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                var particleCount = 40 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount,
-                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-                }));
-                confetti(Object.assign({}, defaults, { particleCount,
-                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-                }));
-            }, 250);
-        }
-
-        function updateProgress() {
-            const obtainedTotal = Object.keys(savedProgress).length;
-            const percentage = totalTotalVariants === 0 ? 0 : Math.round((obtainedTotal / totalTotalVariants) * 100);
-
-            document.getElementById('progress-text').innerText = `${obtainedTotal}/${totalTotalVariants} (${percentage}%)`;
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-        }
-
-        // --- STREAMING_CHUNK:Lógica de UI y Modales ---
-        function setFilter(filterType) {
-            currentFilter = filterType;
-            ['todos', 'obtenidos', 'faltantes'].forEach(btn => {
-                const el = document.getElementById(`btn-${btn}`);
-                el.classList.remove('text-purple-400');
-                el.classList.add('text-gray-500');
-            });
-            document.getElementById(`btn-${filterType}`).classList.remove('text-gray-500');
-            document.getElementById(`btn-${filterType}`).classList.add('text-purple-400');
-            document.getElementById('main-scroll').scrollTop = 0;
-            renderSpirits();
-        }
-
-        function toggleSortMenu() {
-            document.getElementById('sort-menu').classList.toggle('hidden');
-        }
-
-        function setSort(type) {
-            currentSort = type;
-            document.getElementById('sort-menu').classList.add('hidden');
-            renderSpirits();
-        }
-
-        function toggleViewMode() {
-            viewMode = viewMode === 'list' ? 'grid' : 'list';
-            localStorage.setItem('fortniteSpiritsViewMode', viewMode);
-            updateViewModeIcon();
-            renderSpirits();
-        }
-
-        function updateViewModeIcon() {
-            const icon = document.querySelector('#view-toggle-btn i');
-            if (viewMode === 'list') {
-                icon.className = 'fas fa-th-large text-xs'; // Mostrar icono de grid para sugerir cambio
-            } else {
-                icon.className = 'fas fa-list text-xs';
-            }
-        }
-
-        // Modal Espíritu Individual (Grid view)
-        function openSpiritModal(sIndex) {
-            const spirit = spiritsConfig[sIndex];
-            const content = document.getElementById('spirit-modal-content');
-            
-            const obtainedCount = spirit.variants.filter((_, i) => savedProgress[`${sIndex}_${i}`]).length;
-            const totalInSpirit = spirit.variants.length;
-            const isComplete = obtainedCount === totalInSpirit;
-            const initials = spirit.name.substring(0, 2).toUpperCase();
-            
-            const imageHtml = spirit.imgUrl 
-                ? `<img src="${spirit.imgUrl}" alt="${spirit.name}" onerror="this.outerHTML='<div class=\\'w-full h-full bg-gray-800 flex items-center justify-center font-bold text-gray-400 text-2xl\\'>${initials}</div>'" class="w-full h-full object-cover p-1">`
-                : `<div class="w-full h-full bg-gray-800 flex items-center justify-center font-bold text-gray-400 text-2xl">${initials}</div>`;
-
-            const variantsHtml = spirit.variants.map((vName, vIndex) => {
-                const isObtained = !!savedProgress[`${sIndex}_${vIndex}`];
-                const id = `${sIndex}_${vIndex}`;
-                const styleClasses = getVariantStyle(vName, isObtained, id);
-                const icon = isObtained ? '<i class="fas fa-check mr-1.5 opacity-80"></i>' : '';
-                return `
-                    <button onclick="toggleVariant(${sIndex}, ${vIndex})" 
-                            class="variant-btn px-3 py-2.5 rounded-xl text-sm font-bold border ${styleClasses} flex justify-center items-center select-none shadow-sm w-full">
-                        ${icon}${vName}
-                    </button>
-                `;
-            }).join('');
-
-            content.innerHTML = `
-                <div class="flex flex-col items-center mb-5">
-                    <div class="w-20 h-20 rounded-full border-4 ${isComplete ? 'border-purple-500' : 'border-gray-700'} bg-[#13151a] overflow-hidden mb-3 shadow-xl">
-                        ${imageHtml}
-                    </div>
-                    <h2 class="text-2xl font-black text-white">${spirit.name}</h2>
-                    <p class="text-sm font-bold mt-1 ${isComplete ? 'text-purple-400' : 'text-gray-400'}">${obtainedCount} / ${totalInSpirit} Completados</p>
-                </div>
-                <div class="grid grid-cols-2 gap-2 overflow-y-auto max-h-[40vh] p-1 pb-4 no-scrollbar">
-                    ${variantsHtml}
-                </div>
-            `;
-            
-            document.getElementById('spirit-modal').classList.remove('hidden');
-            document.getElementById('spirit-modal').classList.add('flex');
-        }
-
-        function closeSpiritModal() {
-            document.getElementById('spirit-modal').classList.add('hidden');
-            document.getElementById('spirit-modal').classList.remove('flex');
-        }
-
-        // Modal de Estadísticas
-        function openStatsModal() {
-            let stats = {};
-            let fullSpirits = 0;
-
-            spiritsConfig.forEach((s, sIndex) => {
-                let spiritObtained = 0;
-                s.variants.forEach((vName, vIndex) => {
-                    if (savedProgress[`${sIndex}_${vIndex}`]) {
-                        spiritObtained++;
-                        stats[vName] = (stats[vName] || 0) + 1;
                     }
                 });
-                if (spiritObtained === s.variants.length) fullSpirits++;
-            });
 
-            document.getElementById('stat-100').innerText = fullSpirits;
-            document.getElementById('stat-total').innerText = Object.keys(savedProgress).length;
+                // Si por filtros no hay variantes que mostrar, ocultamos la tarjeta entera
+                if (!hasVisibleVariants && currentFilter !== 'todos') return;
 
-            let html = '';
-            // Lista maestra de variantes para ordenar
-            const order = ["Común", "Cúbico", "Dorado", "Patito", "Gomita", "Galáctico", "Gema", "Holográfico"];
-            
-            order.forEach(vName => {
-                const count = stats[vName] || 0;
-                // Buscar total posible de esa variante en todo el juego
-                let totalPossible = spiritsConfig.reduce((acc, curr) => acc + (curr.variants.includes(vName) ? 1 : 0), 0);
+                visibleCount++;
+
+                // Lógica de Imagen (Fallback a iniciales si está vacía o se rompe)
+                const initials = spirit.name.substring(0, 2).toUpperCase();
+                const imageHTML = spirit.imgUrl 
+                    ? `<img src="${spirit.imgUrl}" onerror="this.outerHTML='<div class=\\'w-full h-full bg-gray-800 flex items-center justify-center text-xl font-black text-gray-500\\'>${initials}</div>'" class="w-full h-full object-cover">`
+                    : `<div class="w-full h-full bg-gray-800 flex items-center justify-center text-xl font-black text-gray-500">${initials}</div>`;
+
+                // Construir la tarjeta
+                const card = document.createElement('div');
+                card.className = 'spirit-card bg-[#1c1f26] rounded-2xl p-4 border border-gray-800/80 shadow-lg';
+                card.style.animationDelay = `${index * 0.03}s`;
                 
-                if (totalPossible > 0) {
-                    const pct = Math.round((count / totalPossible) * 100);
-                    // Usamos la misma lógica de colores visuales para la barra de progreso
-                    let colorClass = "bg-gray-500";
-                    if(vName==="Cúbico") colorClass="bg-purple-500";
-                    if(vName==="Dorado") colorClass="bg-yellow-400";
-                    if(vName==="Patito") colorClass="bg-orange-500";
-                    if(vName==="Gomita") colorClass="bg-pink-500";
-                    if(vName==="Galáctico") colorClass="bg-blue-500";
-                    if(vName==="Gema") colorClass="bg-emerald-500";
-                    if(vName==="Holográfico") colorClass="bg-cyan-400";
-
-                    html += `
-                        <div class="bg-gray-800/40 p-3 rounded-xl border border-gray-700/50 flex flex-col gap-1.5">
-                            <div class="flex justify-between text-xs font-bold text-gray-300">
-                                <span>${vName}</span>
-                                <span>${count} / ${totalPossible}</span>
-                            </div>
-                            <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
-                                <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-                            </div>
+                card.innerHTML = `
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-gray-800 overflow-hidden flex-shrink-0 border-2 border-gray-700 shadow-inner">
+                            ${imageHTML}
                         </div>
-                    `;
-                }
+                        <div class="flex-1">
+                            <h3 class="text-lg font-extrabold text-white tracking-tight">${spirit.name}</h3>
+                        </div>
+                        <div class="bg-[#13151a] px-3 py-1 rounded-lg border border-gray-800 text-xs font-bold text-gray-400">
+                            <span class="${spiritOwned === spiritTotal ? 'text-green-400' : 'text-white'}">${spiritOwned}</span> / ${spiritTotal}
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${visibleVariantsHTML}
+                    </div>
+                `;
+                
+                container.appendChild(card);
             });
 
-            document.getElementById('variant-stats-list').innerHTML = html;
-            document.getElementById('stats-modal').classList.remove('hidden');
-            document.getElementById('stats-modal').classList.add('flex');
-        }
-
-        function closeStatsModal() {
-            document.getElementById('stats-modal').classList.add('hidden');
-            document.getElementById('stats-modal').classList.remove('flex');
-        }
-
-        // --- STREAMING_CHUNK:Importar y Exportar ---
-        function exportData() {
-            try {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedProgress));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                
-                const date = new Date().toISOString().split('T')[0];
-                downloadAnchor.setAttribute("download", `fortnite_spirits_${date}.json`);
-                
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
-                showToast("¡Progreso exportado!");
-            } catch(e) {
-                showToast("Error al exportar");
+            if (visibleCount === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-40 text-gray-500 text-center">
+                        <i class="fas fa-ghost text-4xl mb-3 opacity-30"></i>
+                        <p class="text-sm font-semibold">No se encontraron espíritus.</p>
+                    </div>
+                `;
             }
+
+            updateGlobalProgress();
         }
 
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
+        function toggleVariant(spiritName, variant, btnElement) {
+            playPopSound();
+            const key = `${spiritName}-${variant}`;
+            const isOwned = !!ownedData[key];
+            
+            // Efecto visual en el botón
+            btnElement.classList.add('animate-pop');
+            setTimeout(() => btnElement.classList.remove('animate-pop'), 200);
+
+            if (!isOwned) {
+                ownedData[key] = true;
+                btnElement.classList.add('recent-glow');
+                setTimeout(() => btnElement.classList.remove('recent-glow'), 1500);
+            } else {
+                delete ownedData[key];
+            }
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ownedData));
+            
+            // Verificar si completó el espíritu tras el clic
+            const spiritData = db[currentSeason].find(s => s.name === spiritName);
+            if (!isOwned && spiritData) {
+                const total = spiritData.variants.length;
+                let owned = 0;
+                spiritData.variants.forEach(v => { if(ownedData[`${spiritName}-${v}`]) owned++; });
                 
-                const reader = new FileReader();
-                reader.readAsText(file, "UTF-8");
-                reader.onload = readerEvent => {
-                    try {
-                        const content = JSON.parse(readerEvent.target.result);
-                        if (content && typeof content === 'object') {
-                            savedProgress = content;
-                            localStorage.setItem('fortniteSpiritsListV6', JSON.stringify(savedProgress));
-                            recentToggles = []; // Limpiar recientes al importar
-                            localStorage.removeItem('fortniteSpiritsRecent');
-                            renderSpirits();
-                            showToast("¡Progreso restaurado!");
-                        } else {
-                            showToast("Archivo inválido");
-                        }
-                    } catch (err) {
-                        showToast("Error leyendo archivo");
-                    }
+                if(owned === total) {
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#fbbf24', '#38bdf8', '#a7f3d0'], disableForReducedMotion: true });
                 }
             }
-            input.click();
+
+            // Re-renderizado ligero
+            renderList();
         }
 
-        // Iniciar app
-        window.onload = initializeData;
+        function updateGlobalProgress() {
+            const list = db[currentSeason];
+            let total = 0;
+            let owned = 0;
+            
+            list.forEach(spirit => {
+                spirit.variants.forEach(variant => {
+                    total++;
+                    if (ownedData[`${spirit.name}-${variant}`]) owned++;
+                });
+            });
+            
+            const percentage = total === 0 ? 0 : Math.round((owned / total) * 100);
+            
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').innerText = `${owned}/${total} (${percentage}%)`;
+            
+            const label = currentSeason === 'actuales' ? 'Temporada Actual' : 'Temporada Antigua';
+            document.getElementById('header-subtext').innerText = `${total} Variantes • ${label}`;
+        }
+
+        // --- CONTROLES DE NAVEGACIÓN ---
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Reset visual
+            const btns = ['todos', 'obtenidos', 'faltantes'];
+            btns.forEach(b => {
+                const el = document.getElementById(`filter-${b}`);
+                el.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-300 transition-all";
+            });
+            
+            // Set active
+            const activeEl = document.getElementById(`filter-${filter}`);
+            activeEl.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-white bg-gray-800 shadow-sm transition-all";
+            
+            renderList();
+        }
+
+        function setSeason(season) {
+            currentSeason = season;
+            
+            const btnAct = document.getElementById('season-actuales');
+            const btnAnt = document.getElementById('season-antiguos');
+            
+            if (season === 'actuales') {
+                btnAct.className = "flex-1 py-2.5 bg-blue-600/20 border border-blue-500/50 text-blue-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all";
+                btnAnt.className = "flex-1 py-2.5 bg-[#1c1f26] border border-gray-700 text-gray-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-gray-800";
+            } else {
+                btnAnt.className = "flex-1 py-2.5 bg-purple-600/20 border border-purple-500/50 text-purple-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all";
+                btnAct.className = "flex-1 py-2.5 bg-[#1c1f26] border border-gray-700 text-gray-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-gray-800";
+            }
+            
+            // Volver a "Todos" al cambiar de temporada para evitar que se vea vacío
+            if (currentFilter !== 'todos') setFilter('todos');
+            
+            renderList();
+        }
+
+        // Buscador
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            renderList();
+        });
+
+        // Import / Export
+        function exportData() {
+            const dataStr = JSON.stringify(ownedData);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fortnite_spirits_backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Backup exportado correctamente");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (typeof imported === 'object') {
+                        ownedData = { ...ownedData, ...imported };
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(ownedData));
+                        renderList();
+                        showToast("Datos importados con éxito");
+                    }
+                } catch (error) {
+                    showToast("Error al leer el archivo");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Inicializar
+        window.onload = () => {
+            renderList();
+        };
     </script>
 </body>
 </html>
